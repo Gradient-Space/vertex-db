@@ -1,3 +1,4 @@
+-- DEFINE EXTENSIONS FOR ADDED DATABASE FUNCTIONALITY
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -8,13 +9,13 @@ CREATE EXTENSION IF NOT EXISTS "amcheck";
 CREATE EXTENSION IF NOT EXISTS "autoinc";
 
 
+-- DEFINE SCHEMA FOR APP FUNCTIONS
 CREATE TABLE IF NOT EXISTS Tasks (
     taskid          UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid          TEXT NOT NULL,
     noradid         TEXT NOT NULL,
     priority        INTEGER NOT NULL
 );
-CREATE UNIQUE INDEX tasks_userid_idx ON Tasks(userid);
 
 
 CREATE TABLE IF NOT EXISTS Stations (
@@ -25,7 +26,6 @@ CREATE TABLE IF NOT EXISTS Stations (
     altitude        FLOAT NOT NULL,
     minhorizon      FLOAT NOT NULL
 );
-CREATE UNIQUE INDEX stations_stnid_idx ON Stations(stnid);
 
 
 CREATE TABLE IF NOT EXISTS Satellites (
@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS Satellites (
     meananomaly     FLOAT NOT NULL,
     mm              FLOAT NOT NULL
 );
-CREATE UNIQUE INDEX satellites_satid_idx ON Satellites(satid);
 
 
 CREATE TABLE IF NOT EXISTS Passes (
@@ -58,7 +57,6 @@ CREATE TABLE IF NOT EXISTS Passes (
     los             TIMESTAMPTZ NOT NULL,
     scheduled       BOOL NOT NULL
 );
-CREATE UNIQUE INDEX passes_stnid_idx ON Passes(stnid, aos);
 /*
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
     FOREIGN KEY(satid) REFERENCES Satellites(satid)
@@ -78,7 +76,6 @@ CREATE TABLE IF NOT EXISTS Jobs (
     scheduled       BOOL NOT NULL,
     completed       BOOL NOT NULL
 );
-CREATE UNIQUE INDEX jobs_stnid_idx ON Jobs(stnid, aos);
 /*
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
     FOREIGN KEY(satid) REFERENCES Satellites(satid)
@@ -91,9 +88,53 @@ CREATE TABLE IF NOT EXISTS TLEs (
     line1           TEXT NOT NULL,
     line2           TEXT NOT NULL
 );
-CREATE UNIQUE INDEX tles_satid_idx ON TLEs(noradid);
 
 CREATE TABLE IF NOT EXISTS Media (
     fname           TEXT NOT NULL,
     data            BYTEA NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS Notifications (
+    notification    TEXT NOT NULL
+);
+
+-- DEFINE INDEXES FOR IMPROVED SEARCH PERFORMANCE
+CREATE UNIQUE INDEX tasks_userid_idx ON Tasks(userid);
+CREATE UNIQUE INDEX stations_stnid_idx ON Stations(stnid);
+CREATE UNIQUE INDEX satellites_satid_idx ON Satellites(satid);
+CREATE UNIQUE INDEX passes_stnid_idx ON Passes(stnid, aos);
+CREATE UNIQUE INDEX jobs_stnid_idx ON Jobs(stnid, aos);
+CREATE UNIQUE INDEX tles_satid_idx ON TLEs(noradid);
+
+
+-- DEFINE TRIGGER FUNCTIONS FOR LISTEN/NOTIFY SERVICES
+CREATE OR REPLACE FUNCTION orbit_notification()
+RETURNS TRIGGER LANGUAGE PLPGSQL AS 
+$$
+BEGIN
+    PERFORM pg_notify('orbit_notification', '');
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION optimization_notification()
+RETURNS TRIGGER LANGUAGE PLPGSQL AS 
+$$
+BEGIN
+    PERFORM pg_notify('optimization_notification', '');
+    RETURN NEW;
+END;
+$$;
+
+
+-- DEFINE TRIGGERS FOR LISTEN/NOTIFY SERVICES
+CREATE OR REPLACE TRIGGER tle_trigger AFTER INSERT OR UPDATE OR DELETE ON TLEs
+FOR EACH STATEMENT EXECUTE PROCEDURE orbit_notification();
+
+
+CREATE OR REPLACE TRIGGER pass_trigger AFTER INSERT OR UPDATE OR DELETE ON Passes
+FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
+
+
+CREATE OR REPLACE TRIGGER task_trigger AFTER INSERT OR UPDATE OR DELETE ON Tasks
+FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
