@@ -89,14 +89,17 @@ CREATE TABLE IF NOT EXISTS TLEs (
     line2           TEXT NOT NULL
 );
 
+
 CREATE TABLE IF NOT EXISTS Media (
     fname           TEXT NOT NULL,
     data            BYTEA NOT NULL
 );
 
+
 CREATE TABLE IF NOT EXISTS Notifications (
     notification    TEXT NOT NULL
 );
+
 
 -- DEFINE INDEXES FOR IMPROVED SEARCH PERFORMANCE
 CREATE UNIQUE INDEX tasks_userid_idx ON Tasks(userid);
@@ -116,6 +119,7 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
 
 CREATE OR REPLACE FUNCTION optimization_notification()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
