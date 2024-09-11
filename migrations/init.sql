@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS Media (
 
 
 CREATE TABLE IF NOT EXISTS Notifications (
-    notification    TEXT NOT NULL
+    service         TEXT NOT NULL
 );
 
 
@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION orbit_notification()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
 $$
 BEGIN
-    PERFORM pg_notify('orbit_notification', '');
+    INSERT INTO Notifications (service) VALUES ('orbit');
     RETURN NEW;
 END;
 $$;
