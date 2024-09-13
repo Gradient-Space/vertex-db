@@ -54,8 +54,7 @@ CREATE TABLE IF NOT EXISTS Passes (
     azimuth         FLOAT NOT NULL,
     elevation       FLOAT NOT NULL,
     aos             TIMESTAMPTZ NOT NULL,
-    los             TIMESTAMPTZ NOT NULL,
-    scheduled       BOOL NOT NULL
+    los             TIMESTAMPTZ NOT NULL
 );
 /*
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
@@ -72,9 +71,7 @@ CREATE TABLE IF NOT EXISTS Jobs (
     aos             TIMESTAMPTZ NOT NULL,
     los             TIMESTAMPTZ NOT NULL,
     azimuth         FLOAT NOT NULL,
-    elevation       FLOAT NOT NULL,
-    scheduled       BOOL NOT NULL,
-    completed       BOOL NOT NULL
+    elevation       FLOAT NOT NULL
 );
 /*
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
@@ -125,7 +122,7 @@ CREATE OR REPLACE FUNCTION optimization_notification()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
 $$
 BEGIN
-    PERFORM pg_notify('optimization_notification', '');
+    PERFORM pg_notify('optimization', '');
     RETURN NEW;
 END;
 $$;
