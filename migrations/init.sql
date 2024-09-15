@@ -122,6 +122,7 @@ CREATE OR REPLACE FUNCTION optimization_notification()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
 $$
 BEGIN
+    INSERT INTO Notifications (service) VALUES ('optimization');
     PERFORM pg_notify('optimization', '');
     RETURN NEW;
 END;
@@ -138,4 +139,8 @@ FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
 
 
 CREATE OR REPLACE TRIGGER task_trigger AFTER INSERT OR UPDATE OR DELETE ON Tasks
+FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
+
+
+CREATE OR REPLACE TRIGGER job_trigger AFTER INSERT OR UPDATE OR DELETE ON Jobs
 FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
