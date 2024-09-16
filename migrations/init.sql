@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS Tasks (
     taskid          UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid          TEXT NOT NULL,
     noradid         TEXT NOT NULL,
-    priority        INTEGER NOT NULL
+    priority        INTEGER NOT NULL,
+    notbefore       TIMESTAMPTZ NOT NULL,
+    deadline        TIMESTAMPTZ NOT NULL
 );
 
 
