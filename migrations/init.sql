@@ -10,16 +10,6 @@ CREATE EXTENSION IF NOT EXISTS "autoinc";
 
 
 -- DEFINE SCHEMA FOR APP FUNCTIONS
-CREATE TABLE IF NOT EXISTS Tasks (
-    taskid          UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
-    userid          TEXT NOT NULL,
-    noradid         TEXT NOT NULL,
-    priority        INTEGER NOT NULL,
-    notbefore       TIMESTAMPTZ NOT NULL,
-    deadline        TIMESTAMPTZ NOT NULL
-);
-
-
 CREATE TABLE IF NOT EXISTS Stations (
     stnid           UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
     stnname         TEXT NOT NULL,
@@ -31,8 +21,7 @@ CREATE TABLE IF NOT EXISTS Stations (
 
 
 CREATE TABLE IF NOT EXISTS Satellites (
-    satid           UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
-    noradid         TEXT UNIQUE NOT NULL,
+    noradid         INTEGER UNIQUE PRIMARY KEY,
     satname         TEXT UNIQUE NOT NULL,
     designator      TEXT NOT NULL,
     epoch           FLOAT NOT NULL,
@@ -48,41 +37,51 @@ CREATE TABLE IF NOT EXISTS Satellites (
 );
 
 
+CREATE TABLE IF NOT EXISTS Tasks (
+    taskid          UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+    userid          UUID,
+    stnid           UUID,
+    noradid         INTEGER,
+    duration        INTEGER,
+    notbefore       TIMESTAMPTZ NOT NULL,
+    deadline        TIMESTAMPTZ NOT NULL,
+    priority        INTEGER NOT NULL,
+    FOREIGN KEY(stnid) REFERENCES Stations(stnid),
+    FOREIGN KEY(noradid) REFERENCES Satellites(noradid)
+);
+
+
 CREATE TABLE IF NOT EXISTS Passes (
-    stnid           TEXT NOT NULL,
+    stnid           UUID NOT NULL,
     stnname         TEXT NOT NULL,
-    noradid         TEXT NOT NULL,
+    noradid         INTEGER NOT NULL,
     satname         TEXT NOT NULL,
     azimuth         FLOAT NOT NULL,
     elevation       FLOAT NOT NULL,
     aos             TIMESTAMPTZ NOT NULL,
-    los             TIMESTAMPTZ NOT NULL
-);
-/*
+    los             TIMESTAMPTZ NOT NULL,
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
-    FOREIGN KEY(satid) REFERENCES Satellites(satid)
-*/
+    FOREIGN KEY(noradid) REFERENCES Satellites(noradid)
+);
 
 
 CREATE TABLE IF NOT EXISTS Jobs (
     jobid           UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
-    stnid           TEXT NOT NULL, 
+    stnid           UUID NOT NULL, 
     stnname         TEXT NOT NULL,
-    noradid         TEXT NOT NULL,
+    noradid         INTEGER NOT NULL,
     satname         TEXT NOT NULL,
     aos             TIMESTAMPTZ NOT NULL,
     los             TIMESTAMPTZ NOT NULL,
     azimuth         FLOAT NOT NULL,
-    elevation       FLOAT NOT NULL
-);
-/*
+    elevation       FLOAT NOT NULL,
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
-    FOREIGN KEY(satid) REFERENCES Satellites(satid)
-*/
+    FOREIGN KEY(noradid) REFERENCES Satellites(noradid)
+);
 
 
 CREATE TABLE IF NOT EXISTS TLEs (
-    noradid         TEXT NOT NULL PRIMARY KEY,
+    noradid         INTEGER NOT NULL PRIMARY KEY,
     satname         TEXT NOT NULL,
     line1           TEXT NOT NULL,
     line2           TEXT NOT NULL
@@ -103,7 +102,7 @@ CREATE TABLE IF NOT EXISTS Notifications (
 -- DEFINE INDEXES FOR IMPROVED SEARCH PERFORMANCE
 CREATE UNIQUE INDEX tasks_userid_idx ON Tasks(userid);
 CREATE UNIQUE INDEX stations_stnid_idx ON Stations(stnid);
-CREATE UNIQUE INDEX satellites_satid_idx ON Satellites(satid);
+CREATE UNIQUE INDEX satellites_satid_idx ON Satellites(noradid);
 CREATE UNIQUE INDEX passes_stnid_idx ON Passes(stnid, aos);
 CREATE UNIQUE INDEX jobs_stnid_idx ON Jobs(stnid, aos);
 CREATE UNIQUE INDEX tles_satid_idx ON TLEs(noradid);
