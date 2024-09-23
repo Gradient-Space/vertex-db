@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS Tasks (
 
 
 CREATE TABLE IF NOT EXISTS Passes (
+    passid          UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
     stnid           UUID NOT NULL,
     stnname         TEXT NOT NULL,
     noradid         INTEGER NOT NULL,
@@ -67,14 +68,16 @@ CREATE TABLE IF NOT EXISTS Passes (
 
 CREATE TABLE IF NOT EXISTS Jobs (
     jobid           UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+    taskid          UUID NOT NULL,
     stnid           UUID NOT NULL, 
     stnname         TEXT NOT NULL,
     noradid         INTEGER NOT NULL,
     satname         TEXT NOT NULL,
-    aos             TIMESTAMPTZ NOT NULL,
-    los             TIMESTAMPTZ NOT NULL,
     azimuth         FLOAT NOT NULL,
     elevation       FLOAT NOT NULL,
+    aos             TIMESTAMPTZ NOT NULL,
+    los             TIMESTAMPTZ NOT NULL,
+    FOREIGN KEY(taskid) REFERENCES Tasks(taskid),
     FOREIGN KEY(stnid) REFERENCES Stations(stnid),
     FOREIGN KEY(noradid) REFERENCES Satellites(noradid)
 );
