@@ -65,10 +65,19 @@ CREATE TABLE IF NOT EXISTS Passes (
     FOREIGN KEY(noradid) REFERENCES Satellites(noradid)
 );
 
+CREATE TABLE IF NOT EXISTS Plans (
+    taskid          UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+    planid          UUID NOT NULL,
+    stnid           UUID,
+    noradid         INTEGER,
+    notbefore       TIMESTAMPTZ NOT NULL,
+    deadline        TIMESTAMPTZ NOT NULL,
+    priority        INTEGER NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS Jobs (
     jobid           UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
-    taskid          UUID NOT NULL,
+    planid          UUID UNIQUE NOT NULL,
     stnid           UUID NOT NULL, 
     stnname         TEXT NOT NULL,
     noradid         INTEGER NOT NULL,
@@ -76,10 +85,7 @@ CREATE TABLE IF NOT EXISTS Jobs (
     azimuth         FLOAT NOT NULL,
     elevation       FLOAT NOT NULL,
     aos             TIMESTAMPTZ NOT NULL,
-    los             TIMESTAMPTZ NOT NULL,
-    FOREIGN KEY(taskid) REFERENCES Tasks(taskid),
-    FOREIGN KEY(stnid) REFERENCES Stations(stnid),
-    FOREIGN KEY(noradid) REFERENCES Satellites(noradid)
+    los             TIMESTAMPTZ NOT NULL
 );
 
 
@@ -106,13 +112,11 @@ CREATE TABLE IF NOT EXISTS Notifications (
 CREATE UNIQUE INDEX tasks_userid_idx ON Tasks(userid);
 CREATE UNIQUE INDEX stations_stnid_idx ON Stations(stnid);
 CREATE UNIQUE INDEX satellites_satid_idx ON Satellites(noradid);
-CREATE UNIQUE INDEX passes_stnid_idx ON Passes(stnid, aos);
-CREATE UNIQUE INDEX jobs_stnid_idx ON Jobs(stnid, aos);
 CREATE UNIQUE INDEX tles_satid_idx ON TLEs(noradid);
 
 
 -- DEFINE TRIGGER FUNCTIONS FOR LISTEN/NOTIFY SERVICES
-CREATE OR REPLACE FUNCTION orbit_notification()
+CREATE OR REPLACE FUNCTION orbital_prediction()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
 $$
 BEGIN
@@ -122,10 +126,11 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION optimization_notification()
+CREATE OR REPLACE FUNCTION optimization()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
 $$
 BEGIN
+    DELETE FROM Jobs;
     INSERT INTO Notifications (service) VALUES ('optimization');
     PERFORM pg_notify('optimization', '');
     RETURN NEW;
@@ -135,16 +140,12 @@ $$;
 
 -- DEFINE TRIGGERS FOR LISTEN/NOTIFY SERVICES
 CREATE OR REPLACE TRIGGER tle_trigger AFTER INSERT OR UPDATE OR DELETE ON TLEs
-FOR EACH STATEMENT EXECUTE PROCEDURE orbit_notification();
+FOR EACH STATEMENT EXECUTE PROCEDURE orbital_prediction();
 
 
 CREATE OR REPLACE TRIGGER pass_trigger AFTER INSERT OR UPDATE OR DELETE ON Passes
-FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
+FOR EACH STATEMENT EXECUTE PROCEDURE optimization();
 
 
 CREATE OR REPLACE TRIGGER task_trigger AFTER INSERT OR UPDATE OR DELETE ON Tasks
-FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
-
-
-CREATE OR REPLACE TRIGGER job_trigger AFTER INSERT OR UPDATE OR DELETE ON Jobs
-FOR EACH STATEMENT EXECUTE PROCEDURE optimization_notification();
+FOR EACH STATEMENT EXECUTE PROCEDURE optimization();
