@@ -130,6 +130,7 @@ CREATE OR REPLACE FUNCTION optimization()
 RETURNS TRIGGER LANGUAGE PLPGSQL AS 
 $$
 BEGIN
+    DELETE FROM Plans;
     DELETE FROM Jobs;
     INSERT INTO Notifications (service) VALUES ('optimization');
     PERFORM pg_notify('optimization', '');
