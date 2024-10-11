@@ -85,7 +85,8 @@ CREATE TABLE IF NOT EXISTS Jobs (
     azimuth         FLOAT NOT NULL,
     elevation       FLOAT NOT NULL,
     aos             TIMESTAMPTZ NOT NULL,
-    los             TIMESTAMPTZ NOT NULL
+    los             TIMESTAMPTZ NOT NULL,
+    priority        INTEGER NOT NULL
 );
 
 
