@@ -79,11 +79,10 @@ CREATE TABLE IF NOT EXISTS Jobs (
     jobid           UUID UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
     planid          UUID UNIQUE NOT NULL,
     stnid           UUID NOT NULL, 
-    stnname         TEXT NOT NULL,
     noradid         INTEGER NOT NULL,
-    satname         TEXT NOT NULL,
-    azimuth         FLOAT NOT NULL,
-    elevation       FLOAT NOT NULL,
+    satname         TEXT,
+    azimuth         FLOAT,
+    elevation       FLOAT,
     aos             TIMESTAMPTZ NOT NULL,
     los             TIMESTAMPTZ NOT NULL,
     priority        INTEGER NOT NULL
@@ -95,6 +94,13 @@ CREATE TABLE IF NOT EXISTS TLEs (
     satname         TEXT NOT NULL,
     line1           TEXT NOT NULL,
     line2           TEXT NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS Credentials (
+    username    TEXT NOT NULL,
+    password    TEXT NOT NULL,
+    salt        TEXT NOT NULL
 );
 
 
